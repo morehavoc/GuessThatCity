@@ -3,10 +3,10 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["CityGuessBot/CityGuessBot.fsproj", "CityGuessBot/"]
+COPY ["CityGuessBot.fsproj", "CityGuessBot/"]
 RUN dotnet restore "CityGuessBot/CityGuessBot.fsproj"
-COPY . .
 WORKDIR "/src/CityGuessBot"
+COPY . .
 RUN dotnet build "CityGuessBot.fsproj" -c Release -o /app/build
 
 FROM build AS publish
