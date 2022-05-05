@@ -6,8 +6,8 @@ open System.Net.Http
 open System.Threading.Tasks
 open CityGuessBot.Arcgis
 open DSharpPlus
-open DSharpPlus.CommandsNext
-open DSharpPlus.CommandsNext.Attributes
+open DSharpPlus.Entities
+open DSharpPlus.SlashCommands
 open Microsoft.Extensions.Configuration
 
 let appConfig =
@@ -140,27 +140,26 @@ let processGuess (guess: string) =
     }
     
 type CityBot () =
-    inherit BaseCommandModule ()
+    inherit  ApplicationCommandModule()
     
-    [<Command "city">]
-    [<Description "Start a new game of Guess That City...!">]
-    member this.City (ctx: CommandContext): Task =
+    [<SlashCommand ("city", "Get today's city to guess", true)>]
+    member this.City (ctx: InteractionContext): Task =
         task {
-            do! ctx.TriggerTypingAsync()
+            //do! ctx.TriggerTypingAsync()
+            do! ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
             let m = getCityIdToday ()
             let url = getInfomapticUrl m
             let! _ = ctx.Client.SendMessageAsync(ctx.Channel, "Let me find today's city, be right there!")
-            do! ctx.TriggerTypingAsync()
+            //do! ctx.TriggerTypingAsync()
             use! img = getInfomapticImage m
-            let! _ = ctx.Client.SendMessageAsync(ctx.Channel, url)
+            //let! _ = ctx.Client.SendMessageAsync(ctx.Channel, url)
+            let! _ = ctx.EditResponseAsync((new DiscordWebhookBuilder()).WithContent(url))
             return ()
         } :> Task
         
-    [<Command "guess">]
-    [<Description "Guess the current city">]
-    member this.Guess (ctx: CommandContext, [<RemainingText>]guess: string): Task =
+    [<SlashCommand ("guess", "Guess the current city", true)>]
+    member this.Guess (ctx: InteractionContext, [<Option("city", "the name of the city to guess")>]guess: string): Task =
         task {
-            do! ctx.TriggerTypingAsync()
             let city =
                 match guess with
                 | null -> None
@@ -172,7 +171,8 @@ type CityBot () =
                 | None -> Task.FromResult (":mag: Oh, I didn't see your guess there!")
                 | Some a -> processGuess a
             
-            let! _ = ctx.Client.SendMessageAsync(ctx.Channel, msg)
+            //let! _ = ctx.Client.SendMessageAsync(ctx.Channel, msg)
+            let! _ = ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, (new DiscordInteractionResponseBuilder()).WithContent(msg))
             return ()
         } :> Task
         
@@ -187,12 +187,12 @@ let main argv =
     
     let discord = new DiscordClient (config)
     
-    let commandsConfig = CommandsNextConfiguration ()
-    commandsConfig.StringPrefixes <- ["/"]
+    let commandsConfig = SlashCommandsConfiguration ()
 
-    let commands = discord.UseCommandsNext(commandsConfig)
-    //let b = 
-    commands.RegisterCommands<CityBot>()
+    let commands = discord.UseSlashCommands(commandsConfig)
+    //let b =
+    commands.RegisterCommands<CityBot>(877970379686182992UL)
+    commands.RegisterCommands<CityBot>(709744990879744072UL)
     
     discord.ConnectAsync ()
     |> Async.AwaitTask
