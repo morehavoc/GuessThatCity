@@ -116,8 +116,8 @@ let compareStringsMsg (s1: string) (s2: string): string option =
     //match String.Compare (s1, s2, true) with
     match levenshtein s1 s2 with
     | t when t < 2 -> Some(":partying_face: :partying_face: You got it! :fireworks: :fireworks:")
-    | t when t < 3 -> Some("You are :pinching_hand: close! check your spelling!")
-    | t when t < 5 -> Some(":speech_balloon: Close, I think your spelling might be a little off... or maybe the word is just similar!")
+    | t when t < 5 -> Some("You are :pinching_hand: close! check your spelling!")
+    | t when t < 7 -> Some(":speech_balloon: Close, I think your spelling might be a little off... or maybe the word is just similar!")
     | _ -> None
     
 let processGuess (guess: string) =
